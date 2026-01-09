@@ -67,6 +67,10 @@ const IconNavigation = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>
 );
 
+const IconX = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+);
+
 const IconFilter = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
 );
@@ -104,6 +108,10 @@ const App = () => {
 
   // Handlers
   const handleGetLocation = () => {
+    // If already active, treat as clear request or ignore?
+    // UX decision: If success, we show a separate Clear button or allow re-scan.
+    // Here we focus on getting location.
+
     setLocationStatus('loading');
     if (!navigator.geolocation) {
       setLocationStatus('error');
@@ -122,10 +130,16 @@ const App = () => {
       (error) => {
         console.error(error);
         setLocationStatus('error');
-        // Don't alert immediately, just set state
+        alert('Konum alınamadı. Lütfen konum izni verdiğinizden emin olun.');
       },
       { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
     );
+  };
+
+  const handleClearLocation = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering parent button if nested
+    setUserLocation(null);
+    setLocationStatus('idle');
   };
 
   const handleClearFilters = () => {
@@ -141,7 +155,8 @@ const App = () => {
       const matchCity = selectedCity ? item.city === selectedCity : true;
       const matchDistrict = selectedDistrict ? item.district === selectedDistrict : true;
       const matchType = selectedType ? item.type === selectedType : true;
-      const matchCard = selectedCardType ? item.cardTypes.includes(selectedCardType) || item.cardTypes.includes("Tümü") : true;
+      // Fixed logic: simplified check for card types
+      const matchCard = selectedCardType ? item.cardTypes.includes(selectedCardType) : true;
       
       return matchCity && matchDistrict && matchType && matchCard;
     });
@@ -172,29 +187,32 @@ const App = () => {
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">TesisBul</h1>
           </div>
           
-          <button 
-            onClick={handleGetLocation}
-            disabled={locationStatus === 'loading'}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-              locationStatus === 'success' 
-                ? 'bg-green-100 text-green-700 ring-1 ring-green-600/20' 
-                : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg'
-            }`}
-          >
-            {locationStatus === 'loading' ? (
-              <span className="animate-pulse">Konum Alınıyor...</span>
-            ) : locationStatus === 'success' ? (
-              <>
-                <IconNavigation />
-                Konuma Göre Sıralı ({filteredAndSortedFacilities.length})
-              </>
-            ) : (
-              <>
-                <IconNavigation />
-                Konumumu Kullan
-              </>
-            )}
-          </button>
+          <div className="flex gap-2">
+             {/* Location Button */}
+             {locationStatus === 'success' ? (
+                <button
+                  onClick={handleClearLocation}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all bg-green-100 text-green-700 ring-1 ring-green-600/20 hover:bg-green-200"
+                >
+                  <IconNavigation />
+                  Konuma Göre Sıralı
+                  <span className="ml-1 opacity-60"><IconX /></span>
+                </button>
+             ) : (
+                <button
+                  onClick={handleGetLocation}
+                  disabled={locationStatus === 'loading'}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    locationStatus === 'loading'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-blue-600 text-white hover:bg-blue-700 shadow-md hover:shadow-lg'
+                  }`}
+                >
+                  <IconNavigation />
+                  {locationStatus === 'loading' ? 'Konum Alınıyor...' : 'Konumumu Kullan'}
+                </button>
+             )}
+          </div>
         </div>
       </header>
 
@@ -203,9 +221,16 @@ const App = () => {
         
         {/* Filter Bar */}
         <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100 mb-8">
-          <div className="flex items-center gap-2 mb-4 text-slate-500 text-sm font-medium uppercase tracking-wider">
-            <IconFilter />
-            Filtreler
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2 text-slate-500 text-sm font-medium uppercase tracking-wider">
+              <IconFilter />
+              Filtreler
+            </div>
+
+            {/* Result Count Indicator */}
+            <div className="text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
+              {filteredAndSortedFacilities.length} tesis listeleniyor
+            </div>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
