@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
+import tesislerData from './tesisler.json';
 
 // --- Types ---
 interface Facility {
-  id: number;
+  id: string;
   name: string;
   city: string;
   district: string;
@@ -24,117 +25,19 @@ interface UserLocation {
   lng: number;
 }
 
-// --- Mock Data ---
-const MOCK_DATA: Facility[] = [
-  {
-    id: 1,
-    name: "Mavi Spor Kompleksi",
-    city: "İstanbul",
-    district: "Kadıköy",
-    type: "Spor Salonu",
-    cardTypes: ["Gold", "Platin"],
-    lat: 40.9801,
-    lng: 29.0823,
-    address: "Bağdat Cad. No: 12, Kadıköy",
-    image: "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&q=80&w=500"
-  },
-  {
-    id: 2,
-    name: "Şehir Kütüphanesi",
-    city: "İstanbul",
-    district: "Beşiktaş",
-    type: "Kütüphane",
-    cardTypes: ["Standart", "Öğrenci"],
-    lat: 41.0422,
-    lng: 29.0067,
-    address: "Barbaros Bulvarı No: 5, Beşiktaş",
-    image: "https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&q=80&w=500"
-  },
-  {
-    id: 3,
-    name: "Ankara Tenis Kulübü",
-    city: "Ankara",
-    district: "Çankaya",
-    type: "Spor Tesisi",
-    cardTypes: ["Gold", "VIP"],
-    lat: 39.9208,
-    lng: 32.8541,
-    address: "Atatürk Bulvarı No: 100, Çankaya",
-    image: "https://images.unsplash.com/photo-1622163642998-1ea14b60c57e?auto=format&fit=crop&q=80&w=500"
-  },
-  {
-    id: 4,
-    name: "Ege Wellness Center",
-    city: "İzmir",
-    district: "Konak",
-    type: "Spa & Wellness",
-    cardTypes: ["Platin", "VIP"],
-    lat: 38.4237,
-    lng: 27.1428,
-    address: "Kordon Boyu No: 20, Konak",
-    image: "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&q=80&w=500"
-  },
-  {
-    id: 5,
-    name: "Acıbadem Yüzme Havuzu",
-    city: "İstanbul",
-    district: "Üsküdar",
-    type: "Havuz",
-    cardTypes: ["Standart", "Gold"],
-    lat: 41.0082,
-    lng: 29.0410,
-    address: "Acıbadem Mah. Çeçen Sok., Üsküdar",
-    image: "https://images.unsplash.com/photo-1576013551627-0cc20b96c2a7?auto=format&fit=crop&q=80&w=500"
-  },
-  {
-    id: 6,
-    name: "Kızılay Kültür Merkezi",
-    city: "Ankara",
-    district: "Kızılay",
-    type: "Kültür Merkezi",
-    cardTypes: ["Standart"],
-    lat: 39.9214,
-    lng: 32.8519,
-    address: "GMK Bulvarı No: 15, Kızılay",
-    image: "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&q=80&w=500"
-  },
-  {
-    id: 7,
-    name: "Alsancak Yoga Stüdyosu",
-    city: "İzmir",
-    district: "Alsancak",
-    type: "Spor Salonu",
-    cardTypes: ["Standart", "Öğrenci"],
-    lat: 38.4382,
-    lng: 27.1414,
-    address: "Gül Sokak No: 8, Alsancak",
-    image: "https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?auto=format&fit=crop&q=80&w=500"
-  },
-  {
-    id: 8,
-    name: "Bursa Botanik Parkı Kafe",
-    city: "Bursa",
-    district: "Osmangazi",
-    type: "Restoran & Kafe",
-    cardTypes: ["Tümü"],
-    lat: 40.1933,
-    lng: 29.0450,
-    address: "Soğanlı Mah., Osmangazi",
-    image: "https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=500"
-  },
-  {
-    id: 9,
-    name: "Antalya Aquapark",
-    city: "Antalya",
-    district: "Konyaaltı",
-    type: "Eğlence",
-    cardTypes: ["Gold", "Platin"],
-    lat: 36.8841,
-    lng: 30.7056,
-    address: "Dumlupınar Bulvarı, Konyaaltı",
-    image: "https://images.unsplash.com/photo-1506322840447-621d89008412?auto=format&fit=crop&q=80&w=500"
-  }
-];
+// --- Data Transformation ---
+const REAL_DATA: Facility[] = (tesislerData as any[]).map((item) => ({
+  id: item.id,
+  name: item.name,
+  city: item.city,
+  district: item.cityDistrict,
+  type: item.activityGroups?.[0]?.name || 'Diğer',
+  cardTypes: item.cards || [],
+  lat: item.lat,
+  lng: item.lng,
+  address: item.address,
+  image: item.thumbnail
+}));
 
 // --- Utilities ---
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -173,7 +76,7 @@ const IconCreditCard = () => (
 );
 
 const App = () => {
-  const [facilities, setFacilities] = useState<Facility[]>(MOCK_DATA);
+  const [facilities, setFacilities] = useState<Facility[]>(REAL_DATA);
   const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
   const [locationStatus, setLocationStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   
@@ -184,20 +87,20 @@ const App = () => {
   const [selectedCardType, setSelectedCardType] = useState<string>('');
 
   // Derived Data for Dropdowns
-  const cities = useMemo(() => Array.from(new Set(MOCK_DATA.map(f => f.city))).sort(), []);
+  const cities = useMemo(() => Array.from(new Set(facilities.map(f => f.city))).sort(), [facilities]);
   
   const districts = useMemo(() => {
     if (!selectedCity) return [];
-    return Array.from(new Set(MOCK_DATA.filter(f => f.city === selectedCity).map(f => f.district))).sort();
-  }, [selectedCity]);
+    return Array.from(new Set(facilities.filter(f => f.city === selectedCity).map(f => f.district))).sort();
+  }, [selectedCity, facilities]);
 
-  const types = useMemo(() => Array.from(new Set(MOCK_DATA.map(f => f.type))).sort(), []);
+  const types = useMemo(() => Array.from(new Set(facilities.map(f => f.type))).sort(), [facilities]);
   
   const allCardTypes = useMemo(() => {
     const all = new Set<string>();
-    MOCK_DATA.forEach(f => f.cardTypes.forEach(c => all.add(c)));
+    facilities.forEach(f => f.cardTypes.forEach(c => all.add(c)));
     return Array.from(all).sort();
-  }, []);
+  }, [facilities]);
 
   // Handlers
   const handleGetLocation = () => {
@@ -387,15 +290,18 @@ const App = () => {
         {/* Results Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredAndSortedFacilities.length > 0 ? (
-            filteredAndSortedFacilities.map((facility) => (
+            filteredAndSortedFacilities.slice(0, 100).map((facility) => (
               <div key={facility.id} className="group bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden hover:shadow-xl transition-all duration-300 flex flex-col h-full">
                 
                 {/* Card Image Area */}
                 <div className="relative h-48 overflow-hidden bg-slate-200">
                   <img 
-                    src={facility.image} 
+                    src={facility.image || 'https://via.placeholder.com/500?text=No+Image'}
                     alt={facility.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://via.placeholder.com/500?text=No+Image';
+                    }}
                   />
                   <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-xs font-bold text-slate-800 shadow-sm">
                     {facility.type}
