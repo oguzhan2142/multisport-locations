@@ -130,9 +130,19 @@ const App = () => {
       (error) => {
         console.error(error);
         setLocationStatus('error');
-        alert('Konum alınamadı. Lütfen konum izni verdiğinizden emin olun.');
+        let errorMessage = 'Konum alınamadı. Lütfen konum izni verdiğinizden emin olun.';
+
+        if (error.code === 1) { // PERMISSION_DENIED
+           errorMessage = 'Konum izni reddedildi. Lütfen tarayıcı ayarlarından izin verin.';
+        } else if (error.code === 2) { // POSITION_UNAVAILABLE
+           errorMessage = 'Konum bilgisi şu anda kullanılamıyor.';
+        } else if (error.code === 3) { // TIMEOUT
+           errorMessage = 'Konum alma isteği zaman aşımına uğradı.';
+        }
+
+        alert(errorMessage);
       },
-      { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      { enableHighAccuracy: false, timeout: 20000, maximumAge: 60000 }
     );
   };
 
